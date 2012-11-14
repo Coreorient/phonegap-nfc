@@ -60,14 +60,18 @@ public class NfcPlugin extends CordovaPlugin {
             this.asyncHandler = new Handler(asyncThread.getLooper());
         }
 
+        public void close() throws IOException {
+            tech.close();
+            asyncHandler.getLooper().quit();
+        }
+
         public void close(CallbackContext ctx) {
             try {
-                tech.close();
+                close();
                 ctx.success();
             } catch (IOException e) {
                 ctx.error("Failed to close NFC tag connection: " + e.getMessage());
             }
-            asyncHandler.getLooper().quit();
         }
 
         void connect(final CallbackContext ctx) {
@@ -535,6 +539,20 @@ public class NfcPlugin extends CordovaPlugin {
                 nfcAdapter.enableForegroundNdefPush(getActivity(), p2pMessage);
             }
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (tagWorker != null) {
+            Log.w(TAG, "reaping the unreleased NFC worker, nfc.close() was not called");
+            try {
+                tagWorker.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Failure on NFC release", e);
+            }
+            tagWorker = null;
+        }
+        super.onDestroy();
     }
 
     @Override
