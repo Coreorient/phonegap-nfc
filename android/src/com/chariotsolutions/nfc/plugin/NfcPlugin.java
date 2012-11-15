@@ -543,14 +543,15 @@ public class NfcPlugin extends CordovaPlugin {
 
     @Override
     public void onDestroy() {
-        if (tagWorker != null) {
+        // Caution here: this.tagWorker may be modified by the execute thread
+        TagWorker tw = this.tagWorker;
+        if (tw != null) {
             Log.w(TAG, "reaping the unreleased NFC worker, nfc.close() was not called");
             try {
-                tagWorker.close();
+                tw.close();
             } catch (IOException e) {
                 Log.e(TAG, "Failure on NFC release", e);
             }
-            tagWorker = null;
         }
         super.onDestroy();
     }
