@@ -486,7 +486,7 @@ public class NfcPlugin extends CordovaPlugin {
         this.webView.sendJavascript(command);
     }
 
-    JSONObject buildNdefJSON(Ndef ndef, Parcelable[] messages) {
+    static JSONObject buildNdefJSON(Ndef ndef, Parcelable[] messages) {
 
         JSONObject json = Util.ndefToJSON(ndef);
 
