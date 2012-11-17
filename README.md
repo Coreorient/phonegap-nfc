@@ -146,7 +146,31 @@ Supported Platforms
 - Android
 - Blackberry Webworks (OS 7.0 and higher)
 
+nfc.addTagLostListener
+======================
+Registers an event listener to get notified on tag departure.
 
+    nfc.addTagLostListener(callback, [onSuccess], [onFailure]);
+
+Parameters
+----------
+- __callback__: The callback that is called when the tag is lost.
+- __onSuccess__: (Optional) The callback that is called when the listener is added.
+- __onFailure__: (Optional) The callback that is called if there was an error.
+
+Description
+-----------
+
+Function `nfc.addTagLostListener` registers the callback for tag-lost events.
+
+A tag-lost event occurs when the previously discovered tag is found to have
+left the field. It may occur as an effect of a failed I/O operation,
+or it may be emitted just before an event notifying about a
+newly discovered tag.
+
+Supported Platforms
+-------------------
+- Android
 
 nfc.addMimeTypeListener
 ==============================

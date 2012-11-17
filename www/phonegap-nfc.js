@@ -128,6 +128,10 @@ var nfc = {
         cordova.exec(win, fail, "NfcPlugin", "registerNdefFormatable", []);
     },
 
+    addTagLostListener: function (callback, win, fail) {
+        document.addEventListener("tag-lost", callback, false);
+    },
+
     connect: function (win, fail) {
         cordova.exec(win, fail, "NfcPlugin", "connect", []);
     },
