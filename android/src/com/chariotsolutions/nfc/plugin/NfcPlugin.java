@@ -87,7 +87,7 @@ public class NfcPlugin extends CordovaPlugin {
                         tech.connect();  // blocking I/O
                         ctx.success();
                     } catch (TagLostException e) {
-                        handleTagLost();
+                        handleTagLost(tech.getTag());
                         ctx.error("Tag left the field");
                     } catch (IOException e) {
                         ctx.error("NFC tag connect failed: " + e.getMessage());
@@ -127,7 +127,7 @@ public class NfcPlugin extends CordovaPlugin {
                         NdefMessage msg = ndef.getNdefMessage();  // blocking I/O
                         ctx.success(Util.messageToJSON(msg));
                     } catch (TagLostException e) {
-                        handleTagLost();
+                        handleTagLost(tech.getTag());
                         ctx.error("Tag left the field");
                     } catch (Exception e) {
                         ctx.error("NDEF read error: " + e.getMessage());
@@ -162,7 +162,7 @@ public class NfcPlugin extends CordovaPlugin {
                         }
                         ctx.success();
                     } catch (TagLostException e) {
-                        handleTagLost();
+                        handleTagLost(tech.getTag());
                         ctx.error("Tag left the field");
                     } catch (Exception e) {
                         ctx.error("NDEF write error: " + e.getMessage());
@@ -402,12 +402,17 @@ public class NfcPlugin extends CordovaPlugin {
         }
 
         Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        if (tag == null) {
+            return;
+        }
         Parcelable[] messages = intent.getParcelableArrayExtra((NfcAdapter.EXTRA_NDEF_MESSAGES));
 
         synchronized (this) {
-            if (tag != null) {
-                this.detectedTag = tag;
+            Tag oldTag = this.detectedTag;
+            if (oldTag != null) {
+                fireTagLostEvent(oldTag);
             }
+            this.detectedTag = tag;
     
             if (action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
                 Ndef ndef = Ndef.get(tag);
@@ -430,19 +435,26 @@ public class NfcPlugin extends CordovaPlugin {
     }
 
     // NOTE: called in the tag worker thread
-    private void handleTagLost() {
+    private void handleTagLost(Tag lostTag) {
         synchronized (this) {
-            if (this.detectedTag == null) {
+            if (this.detectedTag != lostTag) {
                 return;
             }
             this.detectedTag = null;
-            String command =
-                    "var e = document.createEvent('Events');\n" +
-                    "e.initEvent('" + TAG_LOST + "');\n" +
-                    "document.dispatchEvent(e);";
-            Log.v(TAG, command);
-            this.webView.sendJavascript(command);
+            fireTagLostEvent(lostTag);
         }
+    }
+
+    private void fireTagLostEvent(Tag lostTag) {
+        String javascriptTemplate =
+                "var e = document.createEvent(''Events'');\n" +
+                "e.initEvent(''{0}'');\n" +
+                "e.tag = {1};\n" +
+                "document.dispatchEvent(e);";
+
+        String command = MessageFormat.format(javascriptTemplate, TAG_LOST, Util.tagToJSON(lostTag));
+        Log.v(TAG, command);
+        this.webView.sendJavascript(command);
     }
 
     private void fireNdefEvent(String type, Ndef ndef, Parcelable[] messages) {
