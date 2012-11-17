@@ -476,7 +476,9 @@ See the [phonegap-nfc.js](https://github.com/chariotsolutions/phonegap-nfc/blob/
 
 Events
 ============
-Events are fired when NFC tags are read.  Listeners are added by registering callback functions with the `nfc` object.  For example ` nfc.addNdefListener(myNfcListener, win, fail);`
+Events are fired when NFC tags are discovered or found to have left the field
+(the `tag-lost` event).
+Listeners are added by registering callback functions with the `nfc` object.  For example ` nfc.addNdefListener(myNfcListener, win, fail);`
 
 Properties
 ----------
@@ -486,6 +488,7 @@ Properties
 Types
 ---------
 - tag
+- tag-lost
 - ndef-mime
 - ndef
 - ndef-formatable
