@@ -404,41 +404,45 @@ public class NfcPlugin extends CordovaPlugin {
         Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         Parcelable[] messages = intent.getParcelableArrayExtra((NfcAdapter.EXTRA_NDEF_MESSAGES));
 
-        if (tag != null) {
-            this.detectedTag = tag;
-        }
-
-        if (action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
-            Ndef ndef = Ndef.get(tag);
-            fireNdefEvent(NDEF_MIME, ndef, messages);
-
-        } else if (action.equals(NfcAdapter.ACTION_TECH_DISCOVERED)) {
-            for (String tagTech : tag.getTechList()) {
-                Log.d(TAG, tagTech);
-                if (tagTech.equals(NdefFormatable.class.getName())) {
-                    fireNdefEvent(NDEF_FORMATABLE, null, null);
-                } else if (tagTech.equals(Ndef.class.getName())) { //
-                    Ndef ndef = Ndef.get(tag);
-                    fireNdefEvent(NDEF, ndef, messages);
-                }
+        synchronized (this) {
+            if (tag != null) {
+                this.detectedTag = tag;
             }
-        } else if (action.equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
-            fireTagEvent(tag);
+    
+            if (action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
+                Ndef ndef = Ndef.get(tag);
+                fireNdefEvent(NDEF_MIME, ndef, messages);
+    
+            } else if (action.equals(NfcAdapter.ACTION_TECH_DISCOVERED)) {
+                for (String tagTech : tag.getTechList()) {
+                    Log.d(TAG, tagTech);
+                    if (tagTech.equals(NdefFormatable.class.getName())) {
+                        fireNdefEvent(NDEF_FORMATABLE, null, null);
+                    } else if (tagTech.equals(Ndef.class.getName())) { //
+                        Ndef ndef = Ndef.get(tag);
+                        fireNdefEvent(NDEF, ndef, messages);
+                    }
+                }
+            } else if (action.equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
+                fireTagEvent(tag);
+            }
         }
     }
 
     // NOTE: called in the tag worker thread
     private void handleTagLost() {
-        if (this.detectedTag == null) {
-            return;
+        synchronized (this) {
+            if (this.detectedTag == null) {
+                return;
+            }
+            this.detectedTag = null;
+            String command =
+                    "var e = document.createEvent('Events');\n" +
+                    "e.initEvent('" + TAG_LOST + "');\n" +
+                    "document.dispatchEvent(e);";
+            Log.v(TAG, command);
+            this.webView.sendJavascript(command);
         }
-        this.detectedTag = null;
-        String command =
-                "var e = document.createEvent('Events');\n" +
-                "e.initEvent('" + TAG_LOST + "');\n" +
-                "document.dispatchEvent(e);";
-        Log.v(TAG, command);
-        this.webView.sendJavascript(command);
     }
 
     private void fireNdefEvent(String type, Ndef ndef, Parcelable[] messages) {
