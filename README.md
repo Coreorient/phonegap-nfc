@@ -109,6 +109,7 @@ Methods
 -------
 
 - nfc.addTagDiscoveredListener
+- nfc.addTagLostListener
 - nfc.addMimeTypeListener
 - nfc.addNdefListener
 - nfc.addNdefFormatableListener
