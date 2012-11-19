@@ -363,8 +363,6 @@ public class NfcPlugin extends CordovaPlugin {
     }
 
     private void startNdefPush(final NdefMessage message) {
-        if (nfcAdapter == null)  // shortcut to avoid scheduling
-            return;
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 p2pMessage = message;
@@ -376,8 +374,6 @@ public class NfcPlugin extends CordovaPlugin {
     }
 
     private void stopNdefPush() {
-        if (nfcAdapter == null)  // shortcut to avoid scheduling
-            return;
         getActivity().runOnUiThread(new Runnable() {
             public void run() {
                 p2pMessage = null;
