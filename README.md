@@ -50,7 +50,28 @@ If you want to restrict your application to only devices with NFC hardware, set 
 Installing the Plugin (Blackberry Webworks)
 =============
 
-Assuming you have an existing PhoneGap 2.2.0 Blackberry Webworks project:
+## BlackBerry 10
+Assuming you have an existing PhoneGap 2.3 BlackBerry Project:
+
+### config.xml
+Make sure the following is in your config.xml:
+
+    <rim:invoke-target id="<A unique ID for your project>">
+        <type>APPLICATION</type>
+        <filter>
+            <action>bb.action.OPEN</action>
+            <mime-type>application/vnd.rim.nfc.ndef</mime-type>
+            <property var="uris" value="ndef://1,ndef://2,ndef://4" /> 
+        </filter>
+    </rim:invoke-target>
+
+### JavaScript 
+
+[Download phonegap-nfc.js](https://github.com/chariotsolutions/phonegap-nfc/downloads) and add it to the www folder
+    
+Include phonegap-nfc.js in index.html
+
+    <script type="text/javascript" charset="utf-8" src="phonegap-nfc.js"></script>        
 
 ### Java
 
@@ -63,12 +84,12 @@ Put phonegap-nfc-webworks.jar in the root of your webworks project.
 	$ mkdir build/plugin
 	$ cd build/plugin/
 	$ jar xf ../../phonegap-nfc-webworks.jar
-	$ jar uf ../../www/ext/cordova.2.2.0.jar .
-	$ jar tf ../../www/ext/cordova.2.2.0.jar
+	$ jar uf ../../www/ext/cordova.2.3.0.jar .
+	$ jar tf ../../www/ext/cordova.2.3.0.jar
 	
 Ensure that you see the NfcPlugin classes listed during the last step
 
-	$ jar tf ../..www/ext/cordova.2.2.0.jar
+	$ jar tf ../..www/ext/cordova.2.3.0.jar
 	library.xml
 	org/
 	org/apache/
