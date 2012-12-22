@@ -13,7 +13,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcelable;
 import android.util.Log;
-
 import org.apache.cordova.api.CallbackContext;
 import org.apache.cordova.api.CordovaPlugin;
 import org.json.JSONArray;
@@ -45,9 +44,6 @@ public class NfcPlugin extends CordovaPlugin {
     private static final String TAG_DEFAULT = "tag";
     private static final String TAG_LOST = "tag-lost";
 
-    private static final String ERROR_NO_NFC = "NO_NFC";
-    private static final String ERROR_NFC_DISABLED = "NFC_DISABLED";
-    
     private static final String TAG = "NfcPlugin";
 
     private class TagWorker {
@@ -182,114 +178,107 @@ public class NfcPlugin extends CordovaPlugin {
     private TagWorker tagWorker = null;
 
     @Override
-    public boolean execute(String action, JSONArray data,
-                           CallbackContext callback) throws JSONException {
+    public boolean execute(String action, JSONArray data, CallbackContext callbackContext) throws JSONException {
         Log.d(TAG, "execute " + action);
 
         if (action.equalsIgnoreCase(REGISTER_MIME_TYPE)) {
+            String mimeType = data.getString(0);
             try {
-                addMimeTypeFilter(data.getString(0));
+                addMimeTypeFilter(mimeType);
             } catch (MalformedMimeTypeException e) {
-                callback.error("Invalid MIME Type");
+                callbackContext.error("Invalid MIME Type " + mimeType);
                 return true;
             }
             updateNfcDispatch();
-
-            callback.success();
+            callbackContext.success();
             return true;
+
         } else if (action.equalsIgnoreCase(REGISTER_NDEF)) {
             addTechList(new String[]{Ndef.class.getName()});
             updateNfcDispatch();
-
-            callback.success();
+            callbackContext.success();
             return true;
+
         } else if (action.equalsIgnoreCase(REGISTER_NDEF_FORMATABLE)) {
             addTechList(new String[]{NdefFormatable.class.getName()});
             updateNfcDispatch();
-
-            callback.success();
+            callbackContext.success();
             return true;
+
         }  else if (action.equals(REGISTER_DEFAULT_TAG)) {
             addTagFilter();
             updateNfcDispatch();
-
-            callback.success();
+            callbackContext.success();
             return true;
+
         } else if (action.equalsIgnoreCase(CONNECT)) {
             if (tagWorker != null) {
-                callback.error("Already connected");
+                callbackContext.error("Already connected");
                 return true;
             }
             Tag tag = this.detectedTag;
             if (tag == null) {
-                callback.error("No tag is detected");
+                callbackContext.error("No tag is detected");
                 return true;
             }
             TagTechnology tech = Util.ndefTechForTag(tag);
             if (tech == null) {
-                callback.error("Tag doesn't support NDEF");
+                callbackContext.error("Tag doesn't support NDEF");
                 return true;
             }
 
             tagWorker = new TagWorker(tech);
-            tagWorker.connect(callback);
+            tagWorker.connect(callbackContext);
             return true;
+
         } else if (action.equalsIgnoreCase(CLOSE)) {
             if (tagWorker == null) {
-                callback.error("Tag is not connected");
+                callbackContext.error("Tag is not connected");
                 return true;
             }
-            tagWorker.close(callback);
+            tagWorker.close(callbackContext);
             tagWorker = null;
             return true;
+
         } else if (action.equalsIgnoreCase(READ_NDEF)) {
             if (tagWorker == null) {
-                callback.error("Tag is not connected");
+                callbackContext.error("Tag is not connected");
                 return true;
             }
-            tagWorker.readNdef(callback);
+            tagWorker.readNdef(callbackContext);
             return true;
+
         } else if (action.equalsIgnoreCase(WRITE_NDEF)) {
             if (tagWorker == null) {
-                callback.error("Tag is not connected");
+                callbackContext.error("Tag is not connected");
                 return true;
             }
             NdefRecord[] records = Util.jsonToNdefRecords(data.getString(0));
-            tagWorker.writeNdef(new NdefMessage(records), callback);
+            tagWorker.writeNdef(new NdefMessage(records), callbackContext);
             return true;
+
         } else if (action.equalsIgnoreCase(WRITE_TAG)) {
             NdefRecord[] records = Util.jsonToNdefRecords(data.getString(0));
-            writeTag(new NdefMessage(records), callback);
+            writeTag(new NdefMessage(records), callbackContext);
             return true;
 
         } else if (action.equalsIgnoreCase(SHARE_TAG)) {
 
             NdefRecord[] records = Util.jsonToNdefRecords(data.getString(0));
-
             startNdefPush(new NdefMessage(records));
 
-            callback.success();
+            callbackContext.success();
             return true;
 
         } else if (action.equalsIgnoreCase(UNSHARE_TAG)) {
             stopNdefPush();
-            callback.success();
+            callbackContext.success();
             return true;
 
         } else if (action.equalsIgnoreCase(INIT)) {
             Log.d(TAG, "Enabling plugin");
 
-            NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(getActivity());
-
-            if (nfcAdapter == null) {
-                callback.error(ERROR_NO_NFC);
-                return true;
-            } else if (!nfcAdapter.isEnabled()) {
-                callback.error(ERROR_NFC_DISABLED);
-                return true;
-            } // Note: a non-error could be NDEF_PUSH_DISABLED
-
-            callback.success();
+            callbackContext.success();
 
             // Parse the intent and fire tag events after the plugin
             // initialization is nominally complete.
